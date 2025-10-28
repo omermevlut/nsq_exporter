@@ -27,7 +27,7 @@ jobs:
       - name: Ensure modules
         run: |
           go mod tidy
-          go mod download
+          go mod vendor
 
       - name: Diagnostic local build (repo root)
         run: |
