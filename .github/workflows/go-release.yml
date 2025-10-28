@@ -1,25 +1,36 @@
-# workflow name
-name: Generate release-artifacts
-
-# on events
-on:
-  release:
-    types: 
-        - created
-
-# workflow tasks
 jobs:
   generate:
     name: Generate cross-platform builds
     runs-on: ubuntu-latest
     steps:
       - name: Checkout the repository
-        uses: actions/checkout@v2
-      - name: Generate build files
+        uses: actions/checkout@v3
+
+      - name: Set up Go
+        uses: actions/setup-go@v4
+        with:
+          go-version: '1.21' # set to the version you use locally
+
+      - name: Show Go environment
+        run: |
+          go version
+          go env
+
+      - name: Ensure modules
+        run: |
+          go mod tidy
+          go mod download
+
+      - name: Diagnostic local build (repo root)
+        run: |
+          mkdir -p dist
+          go build -v -o dist/nsq_exporter .
+
+      - name: Generate build files (cross-build)
         uses: thatisuday/go-cross-build@v1
         with:
-            platforms: 'linux/amd64, linux/arm64, darwin/amd64, windows/amd64'
-            package: ''
-            name: 'nsq_exporter'
-            compress: 'true'
-            dest: 'dist'
+          platforms: 'linux/amd64, linux/arm64, darwin/amd64, windows/amd64'
+          package: '.'               # <-- explicitly point to repo root (main.go)
+          name: 'nsq_exporter'
+          compress: 'true'
+          dest: 'dist'
